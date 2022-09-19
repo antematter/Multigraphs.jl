@@ -1,7 +1,7 @@
 import Base: eltype, Pair, Tuple, show, ==, iterate, length
-import Graphs: AbstractEdge, SimpleEdge, src, dst, reverse
+import Graphs: AbstractEdge, SimpleEdge, src, dst, reverse, weights
 
-export AbstractWeightedMultipleEdge, WeightedMultipleEdge, mul
+export AbstractWeightedMultipleEdge, WeightedMultipleEdge, mul, weights
 
 """
     AbstractWeightedMultipleEdge{T, U, W} <: AbstractMultipleEdge{T, U}
@@ -44,24 +44,34 @@ struct WeightedMultipleEdge{T<:Integer, U<:Integer, W<:Any} <: AbstractWeightedM
     end
 end
 
-WeightedMultipleEdge(src, dst, ::U) where U = WeightedMultipleEdge(src, dst, one(Int), [one(U)])
+function WeightedMultipleEdge(src::T, dst::T, mul::U, w::Type{W}) where {T<:Integer, U<:Integer, W<:Any}
+    if isstructtype(w) 
+        return WeightedMultipleEdge(src, dst, mul, [w() for i = 1:mul])
+    end 
+    return WeightedMultipleEdge(src, dst, mul, [one(w) for i = 1:mul])
+end
+
 
 function WeightedMultipleEdge(a::Vector{T}, ws::Vector{W}) where {T<:Integer, W<:Any}
     l = length(a)
     if l == 2
         return WeightedMultipleEdge(a[1], a[2])
     elseif l > 2
-        @assert a[3] == length(w) || "weights should match edge multiplicty" 
-        return WeightedMultipleEdge(a[1], a[2], a[3], w)
+        @assert a[3] == length(ws) || "weights should match edge multiplicty" 
+        return WeightedMultipleEdge(a[1], a[2], a[3], ws)
     end
 end
 
-WeightedMultipleEdge(t::NTuple{2}) = WeightedMultipleEdge(t[1], t[2], Float64)
-WeightedMultipleEdge(p::Pair) = WeightedMultipleEdge(p.first, p.second, Float64)
-WeightedMultipleEdge(e::T) where {T<:AbstractEdge} = WeightedMultipleEdge(src(e), dst(e), Float64)
+WeightedMultipleEdge(src, dst, mul) = WeightedMultipleEdge(src, dst, mul, AbstractFloat)
+WeightedMultipleEdge(src, dst) = WeightedMultipleEdge(src, dst, one(typeof(src)))
+WeightedMultipleEdge(p::Pair) = WeightedMultipleEdge(p.first, p.second, one(typeof(p.first)))
+WeightedMultipleEdge(t::NTuple{2}) = WeightedMultipleEdge(t[1], t[2])
+WeightedMultipleEdge(e::T) where {T<:AbstractEdge} = WeightedMultipleEdge(src(e), dst(e))
+eltype(e::T) where {T<:AbstractWeightedMultipleEdge} = eltype(src(e))
 
 src(e::WeightedMultipleEdge) = e.src
 dst(e::WeightedMultipleEdge) = e.dst
+
 
 """
     mul(e)
@@ -107,8 +117,8 @@ show(io::IO, e::AbstractWeightedMultipleEdge) = print(io, "Multiple edge $(src(e
 Tuple(e::AbstractWeightedMultipleEdge) = (src(e), dst(e), mul(e), weights(e))
 
 
-reverse(e::T) where {T<:AbstractWeightedMultipleEdge} = MultipleEdge(dst(e), src(e), mul(e), reverse(weights(e)))
-==(e1::AbstractWeightedMultipleEdge, e2::AbstractWeightedMultipleEdge) = (src(e1) == src(e2) && dst(e1) == dst(e2) && mul(e1) == mul(e2) && weights(e1) == weights(e2))
+reverse(e::T) where {T<:AbstractWeightedMultipleEdge} = WeightedMultipleEdge(dst(e), src(e), mul(e), reverse(weights(e)))
+
 
 struct WeightedSimpleEdge{U<:Any}
     src::Int
@@ -116,9 +126,16 @@ struct WeightedSimpleEdge{U<:Any}
     w::U
 end
 
-WeightedSimpleEdge(e::AbstractWeightedMultipleEdge, state::U) where U<:Integer = WeightedSimpleEdge(src(e), dst(e), weights(e)[state]) 
+src(e::WeightedSimpleEdge) = e.src
+dst(e::WeightedSimpleEdge) = e.dst
 
-show(io::IO, e::WeightedSimpleEdge) = print(io, "Edge $(src(e)) => $(dst(e)) with weight $(w(e))")
+WeightedSimpleEdge(e::AbstractWeightedMultipleEdge, state::U) where U<:Integer = WeightedSimpleEdge(src(e), dst(e), weights(e)[state - 1]) 
+
+==(e1::AbstractWeightedMultipleEdge, e2::AbstractWeightedMultipleEdge) = (src(e1) == src(e2) && dst(e1) == dst(e2) && mul(e1) == mul(e2) && weights(e1) == weights(e2))
+==(e1::AbstractWeightedMultipleEdge, e2::WeightedSimpleEdge) = (src(e1) == src(e2) && dst(e1) == dst(e2) && any(==(e2.w), weights(e1)))
+==(e1::WeightedSimpleEdge, e2::AbstractWeightedMultipleEdge) = (src(e1) == src(e2) && dst(e1) == dst(e2) && any(==(e1.w), weights(e2)))
+
+show(io::IO, e::WeightedSimpleEdge) = print(io, "Edge $(src(e)) => $(src(e)) with weight $(e.w)")
 
 function iterate(e::WeightedMultipleEdge{T, U, W}, state::U=one(U)) where {T<:Integer, U<:Integer, W<:Any}
     if state > mul(e)
@@ -129,4 +146,4 @@ function iterate(e::WeightedMultipleEdge{T, U, W}, state::U=one(U)) where {T<:In
     end
 end
 
-length(me::WeightedMultipleEdge) = sum(weights(me))
+length(me::WeightedMultipleEdge) = mul(me)

@@ -16,3 +16,15 @@ end
 @testset "di_multigraph.jl" begin
     include("di_multigraph_adjlist.jl")
 end
+
+@testset "weighted_multiple_edge.jl" begin 
+    include("weighted_multiple_edge.jl")
+end
+
+@testset "weighted_multiple_edge_iter.jl" begin 
+    include("weighted_multiple_edge_iter.jl")
+end
+
+@testset "weighted_di_multigraph_adjlist.jl" begin 
+    include("weighted_di_multigraph_adjlist.jl")
+end

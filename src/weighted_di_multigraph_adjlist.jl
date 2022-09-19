@@ -4,17 +4,24 @@ import Base: copy
 import Graphs: nv, has_edge, add_edge!, rem_edge!, rem_vertex!,
     rem_vertices!, add_vertex!, add_vertices!, outneighbors, inneighbors, neighbors,
     vertices, adjacency_matrix, ne, is_directed, degree, indegree, outdegree, edges,
-    has_vertex, all_neighbors
+    has_vertex, all_neighbors, edgetype
 
-export WeightedDiMultigraph
+export WeightedDiMultigraph, AbstractWeightedMultigraph, add_vertex!, add_edge!, add_vertices!,
+       inneighbors, outneighbors, rem_vertices!, rem_vertex!, vertices, nv, ne, has_edge, has_vertex,
+       degree, indegree, outdegree, adjacency_matrix, is_directed, edges, all_neighbors, edgetype,
+       rem_edge!
+
 
 abstract type AbstractWeightedMultigraph{T, U} <: AbstractMultigraph{T} end
+
+edgetype(mg::AbstractWeightedMultigraph) = WeightedMultipleEdge{eltype(mg), multype(mg)}
 
 mutable struct WeightedDiMultigraph{T<:Integer, U<:Any} <: AbstractWeightedMultigraph{T, U}
     adjlist::Dict{T, Vector{T}}
     weights::Dict{T, Vector{U}}
     _idmax::T
-    function WeightedDiMultigraph{T, U}(d::Dict{T, Vector{T}}, w::Dict{T, Vector{U}}, _idmax::T) where {T<:Integer, U<:Any}
+
+    function WeightedDiMultigraph{T, U}(d::Dict{T, Vector{T}}, w::Dict{T, Vector{U}}, _idmax::T) where T where U
         adjlist = deepcopy(d)
         weights = deepcopy(w)
         vs = keys(adjlist)
@@ -30,24 +37,22 @@ mutable struct WeightedDiMultigraph{T<:Integer, U<:Any} <: AbstractWeightedMulti
         _idmax >= 0 || (_idmax = isempty(adjlist) ? 0 : maximum(vs))
         new{T, U}(adjlist, weights, _idmax)
     end
+    
 end
 
-WeightedDiMultigraph(adjlist::Dict{T, Vector{T}}, weights::Dict{U, Vector{U}}) where {T<:Integer, U<:Any} = WeightedDiMultigraph{T}(adjlist, weights, isempty(adjlist) ? 0 : maximum(keys(adjlist)))
+WeightedDiMultigraph(adjlist::Dict{T, Vector{T}}, weights::Dict{T, Vector{U}}) where {T<:Integer, U<:Any} = WeightedDiMultigraph{T, U}(adjlist, weights, isempty(adjlist) ? 0 : maximum(keys(adjlist)))
 
 function WeightedDiMultigraph(adjmx::AbstractMatrix{Vector{U}}) where {U<:Any}
     m, n = size(adjmx)
     if m != n
         error("Adjacency matrices should be square!")
     end
-    if sum(adjmx .!= 0) != sum(adjmx .> 0)
-        error("All elements in adjacency matrices should be non-negative!")
-    end
     adjlist = Dict(zip((1:m), [Int[] for _ = 1:m]))
     weights = Dict(zip((1:m), [U[] for _ = 1:m]))
     for v1 = 1:m
         for v2 = 1:m
             ws = adjmx[v1, v2]
-            for i = 1:length(w)
+            for i = 1:length(ws)
                 push!(adjlist[v1], v2)
                 push!(weights[v1], ws[i])
             end
@@ -56,18 +61,20 @@ function WeightedDiMultigraph(adjmx::AbstractMatrix{Vector{U}}) where {U<:Any}
     WeightedDiMultigraph{Int, U}(adjlist, weights, m)
 end
 
-function WeightedDiMultigraph(n::T, ::U) where {T<:Integer, U<:Any} 
+function WeightedDiMultigraph(n::T, ::Type{U}) where {T<:Integer, U<:Any} 
     n >= 0 || error("Number of vertices should be non-negative")
     adjlist = Dict{T, Vector{T}}()
+    weights = Dict{T, Vector{U}}()
+
     for i = 1:n
         adjlist[i] = T[]
         weights[i] = U[]
     end
     return WeightedDiMultigraph(adjlist, weights)
 end
-WeightedDiMultigraph(g::SimpleDiGraph{T}, ::U) where {T<:Integer, U<:Any} = WeightedDiMultigraph(
+WeightedDiMultigraph(g::SimpleDiGraph{T}, w::Type{U}) where {T<:Integer, U<:Any} = WeightedDiMultigraph(
                                                                                  Dict(zip(T(1):nv(g), Graphs.SimpleGraphs.fadj(g))), 
-                                                                                 Dict(zip(T(1):nv(g), ones(U, length.(Graphs.SimpleGraphs.fadj(g)))))
+                                                                                 Dict(zip(T(1):nv(g), ones(w, length.(Graphs.SimpleGraphs.fadj(g)))))
                                                                                 )
 
 copy(mg::WeightedDiMultigraph{T}) where {T} = WeightedDiMultigraph{T}(deepcopy(mg.adjlist), deepcopy(mg.weights), mg._idmax)
@@ -82,14 +89,14 @@ has_vertex(mg::WeightedDiMultigraph, v::Integer) = haskey(mg.adjlist, v)
 
 function adjacency_matrix(mg::WeightedDiMultigraph)
     wtype = weighttype(mg)
-    adjmx = [wtype[] for _=1:CartesianIndices((nv(mg), nv(mg)))]
+    adjmx = [wtype[] for _ in CartesianIndices((nv(mg), nv(mg)))]
 
     ids = sort!(vertices(mg))
     for id1 in ids
         v1 = searchsortedfirst(ids, id1)
-        for id2 in mg.adjlist[id1]
+        for (i, id2) in enumerate(mg.adjlist[id1])
             v2 = searchsortedfirst(ids, id2)
-            @inbounds push!(adjmx[v1, v2], mg.weights[v1][v2])
+            @inbounds push!(adjmx[v1, v2], mg.weights[v1][i])
         end
     end
     return adjmx
@@ -99,17 +106,24 @@ function add_edge!(mg::WeightedDiMultigraph, me::AbstractWeightedMultipleEdge)
     s = src(me)
     d = dst(me)
     m = mul(me)
-    w = weights(me)
+    ws = weights(me)
     if has_vertex(mg, s) && has_vertex(mg, d)
         for i = 1:m
             idx = searchsortedfirst(mg.adjlist[s], d)
             insert!(mg.adjlist[s], idx, d)
-            insert!(mg.weights[s], idx, w)
+            insert!(mg.weights[s], idx, ws[i])
         end
         return true
     end
     return false
 end
+
+has_edge(mg::AbstractWeightedMultigraph, t::Union{NTuple{2}, Pair}) = has_edge(mg, WeightedMultipleEdge(t)) 
+has_edge(mg::AbstractWeightedMultigraph, src, dst) = has_edge(mg, WeightedMultipleEdge(src, dst)) 
+
+add_edge!(mg::AbstractWeightedMultigraph, x, y) = add_edge!(mg, WeightedMultipleEdge(x, y))
+add_edge!(mg::AbstractWeightedMultigraph, x, y, z) = add_edge!(mg, WeightedMultipleEdge(x, y, z))
+add_edge!(mg::AbstractWeightedMultigraph, x::Vector{<:Integer}) = add_edge!(mg, WeightedMultipleEdge(x...))
 
 function rem_edge!(mg::WeightedDiMultigraph, me::AbstractMultipleEdge)
     if has_edge(mg, me)
@@ -158,6 +172,8 @@ function add_vertices!(mg::WeightedDiMultigraph{T, U}, n::Integer) where {T<:Int
     return new_ids
 end
 
+add_vertex!(mg::WeightedDiMultigraph{T, U}) where {T<:Integer, U<:Any} = add_vertices!(mg, one(T))
+
 function outneighbors(mg::WeightedDiMultigraph, v::Integer; count_mul::Bool = false)
     has_vertex(mg, v) || error("Vertex not found!")
     if count_mul
@@ -199,6 +215,7 @@ function weights(mg::WeightedDiMultigraph, s::Integer, d::Integer)
 end
 
 is_directed(mg::WeightedDiMultigraph) = true
+
 function ne(mg::WeightedDiMultigraph; count_mul::Bool = false)
     if count_mul
         return sum([length(mg.adjlist[v]) for v in vertices(mg)])
