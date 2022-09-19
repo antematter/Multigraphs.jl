@@ -10,7 +10,6 @@ Multigraphs extension for `Graphs.jl`.
 This fork adds a weighted version of the Multigraphs. The usage is as follows:
 
 ```julia
-```
 julia> wmg = WeightedDiMultigraph(4, Float64)
 {4, 0} directed Int64 multigraph
 
