@@ -26,6 +26,7 @@ julia> for e in edges(wmg) println(e) end
 Multiple edge 1 => 2 with multiplicity 1 and weights [1.0]
 Multiple edge 2 => 3 with multiplicity 1 and weights [1.0]
 Multiple edge 3 => 4 with multiplicity 1 and weights [1.0]
+
 julia> we = WeightedMultipleEdge([1, 2, 3], [2, 3, 4])
 Multiple edge 1 => 2 with multiplicity 3 and weights [2, 3, 4]
 
