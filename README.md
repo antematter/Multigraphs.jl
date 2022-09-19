@@ -5,40 +5,6 @@
 
 Multigraphs extension for `Graphs.jl`.
 
-## Note
-
-This fork adds a weighted version of the Multigraphs. The usage is as follows:
-
-```julia
-julia> wmg = WeightedDiMultigraph(4, Float64)
-{4, 0} directed Int64 multigraph
-
-julia> add_edge!(wmg, 1, 2)
-true
-
-julia> add_edge!(wmg, 3, 4)
-true
-
-julia> add_edge!(wmg, 2, 3)
-true
-
-julia> for e in edges(wmg) println(e) end
-Multiple edge 1 => 2 with multiplicity 1 and weights [1.0]
-Multiple edge 2 => 3 with multiplicity 1 and weights [1.0]
-Multiple edge 3 => 4 with multiplicity 1 and weights [1.0]
-
-julia> we = WeightedMultipleEdge([1, 2, 3], [2, 3, 4])
-Multiple edge 1 => 2 with multiplicity 3 and weights [2, 3, 4]
-
-julia> add_edge!(wmg, we)
-true
-
-julia> for e in edges(wmg) println(e) end
-Multiple edge 1 => 2 with multiplicity 4 and weights [4.0, 3.0, 2.0, 1.0]
-Multiple edge 2 => 3 with multiplicity 1 and weights [1.0]
-Multiple edge 3 => 4 with multiplicity 1 and weights [1.0]
-```
-
 ## Installation
 
 <p>
@@ -94,6 +60,40 @@ julia> for e in mes[1]
 Edge 1 => 2
 Edge 1 => 2
 
+```
+
+## Note about this fork
+
+This fork adds a weighted version of the Multigraphs. The usage is as follows:
+
+```julia
+julia> wmg = WeightedDiMultigraph(4, Float64)
+{4, 0} directed Int64 multigraph
+
+julia> add_edge!(wmg, 1, 2)
+true
+
+julia> add_edge!(wmg, 3, 4)
+true
+
+julia> add_edge!(wmg, 2, 3)
+true
+
+julia> for e in edges(wmg) println(e) end
+Multiple edge 1 => 2 with multiplicity 1 and weights [1.0]
+Multiple edge 2 => 3 with multiplicity 1 and weights [1.0]
+Multiple edge 3 => 4 with multiplicity 1 and weights [1.0]
+
+julia> we = WeightedMultipleEdge([1, 2, 3], [2, 3, 4])
+Multiple edge 1 => 2 with multiplicity 3 and weights [2, 3, 4]
+
+julia> add_edge!(wmg, we)
+true
+
+julia> for e in edges(wmg) println(e) end
+Multiple edge 1 => 2 with multiplicity 4 and weights [4.0, 3.0, 2.0, 1.0]
+Multiple edge 2 => 3 with multiplicity 1 and weights [1.0]
+Multiple edge 3 => 4 with multiplicity 1 and weights [1.0]
 ```
 
 ## License
