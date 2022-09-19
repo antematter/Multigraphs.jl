@@ -172,6 +172,8 @@ function add_vertices!(mg::WeightedDiMultigraph{T, U}, n::Integer) where {T<:Int
     return new_ids
 end
 
+add_vertex!(mg::WeightedDiMultigraph{T, U}) where {T<:Integer, U<:Any} = add_vertices!(mg, one(T))
+
 function outneighbors(mg::WeightedDiMultigraph, v::Integer; count_mul::Bool = false)
     has_vertex(mg, v) || error("Vertex not found!")
     if count_mul

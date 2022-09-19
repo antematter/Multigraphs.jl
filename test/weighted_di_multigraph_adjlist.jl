@@ -50,12 +50,6 @@ rem_edge!(g, 2, 3, 1)
 @test has_edge(g, 2, 3) && has_edge(g, (2, 3))
 @test !has_edge(g, 3, 4) && !has_edge(g, 2, 5)
 @test has_vertex(g, 1) && !has_vertex(g, 5)
-for v in vertices(g)
-    @test inneighbors(g, v) == outneighbors(g, v)
-    @test degree(g, v) == indegree(g, v) && indegree(g, v) == outdegree(g, v)
-end
-add_vertex!(g)
-@test indegree(g) == outdegree(g)
 
-mg0 = WeightedDiMultigraph(0)
+mg0 = WeightedDiMultigraph(0, Int)
 @test nv(mg0) == ne(mg0) == 0
