@@ -51,22 +51,8 @@ function WeightedMultipleEdge(src::T, dst::T, mul::U, w::Type{W}) where {T<:Inte
     return WeightedMultipleEdge(src, dst, mul, [one(w) for i = 1:mul])
 end
 
+WeightedMultipleEdge(src::T, dst::T, ws::U) where {T<:Integer, U<:Any} = WeightedMultipleEdge(src, dst, one(Int), [ws])
 
-function WeightedMultipleEdge(a::Vector{T}, ws::Vector{W}) where {T<:Integer, W<:Any}
-    l = length(a)
-    if l == 2
-        return WeightedMultipleEdge(a[1], a[2])
-    elseif l > 2
-        @assert a[3] == length(ws) || "weights should match edge multiplicty" 
-        return WeightedMultipleEdge(a[1], a[2], a[3], ws)
-    end
-end
-
-WeightedMultipleEdge(src, dst, mul) = WeightedMultipleEdge(src, dst, mul, AbstractFloat)
-WeightedMultipleEdge(src, dst) = WeightedMultipleEdge(src, dst, one(typeof(src)))
-WeightedMultipleEdge(p::Pair) = WeightedMultipleEdge(p.first, p.second, one(typeof(p.first)))
-WeightedMultipleEdge(t::NTuple{2}) = WeightedMultipleEdge(t[1], t[2])
-WeightedMultipleEdge(e::T) where {T<:AbstractEdge} = WeightedMultipleEdge(src(e), dst(e))
 eltype(e::T) where {T<:AbstractWeightedMultipleEdge} = eltype(src(e))
 
 src(e::WeightedMultipleEdge) = e.src

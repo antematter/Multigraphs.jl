@@ -36,8 +36,7 @@ mutable struct WeightedDiMultigraph{T<:Integer, U<:Any} <: AbstractWeightedMulti
         end
         _idmax >= 0 || (_idmax = isempty(adjlist) ? 0 : maximum(vs))
         new{T, U}(adjlist, weights, _idmax)
-    end
-    
+    end 
 end
 
 WeightedDiMultigraph(adjlist::Dict{T, Vector{T}}, weights::Dict{T, Vector{U}}) where {T<:Integer, U<:Any} = WeightedDiMultigraph{T, U}(adjlist, weights, isempty(adjlist) ? 0 : maximum(keys(adjlist)))
@@ -120,6 +119,8 @@ end
 
 has_edge(mg::AbstractWeightedMultigraph, t::Union{NTuple{2}, Pair}) = has_edge(mg, WeightedMultipleEdge(t)) 
 has_edge(mg::AbstractWeightedMultigraph, src, dst) = has_edge(mg, WeightedMultipleEdge(src, dst)) 
+
+add_edge!(mg::AbstractWeightedMultigraph, x::T, y::T, w::U) where {T<:Integer, U<:Any} = add_edge!(mg, WeightedMultipleEdge(x, y, w))
 
 add_edge!(mg::AbstractWeightedMultigraph, x, y) = add_edge!(mg, WeightedMultipleEdge(x, y))
 add_edge!(mg::AbstractWeightedMultigraph, x, y, z) = add_edge!(mg, WeightedMultipleEdge(x, y, z))
