@@ -76,7 +76,7 @@ WeightedDiMultigraph(g::SimpleDiGraph{T}, w::Type{U}) where {T<:Integer, U<:Any}
                                                                                  Dict(zip(T(1):nv(g), ones(w, length.(Graphs.SimpleGraphs.fadj(g)))))
                                                                                 )
 
-copy(mg::WeightedDiMultigraph{T}) where {T} = WeightedDiMultigraph{T}(deepcopy(mg.adjlist), deepcopy(mg.weights), mg._idmax)
+copy(mg::WeightedDiMultigraph{T, U}) where {T<:Integer, U} = WeightedDiMultigraph{T, U}(deepcopy(mg.adjlist), deepcopy(mg.weights), mg._idmax)
 
 findparam(::Dict{<:Integer, Vector{U}}) where U = U
 weighttype(mg::WeightedDiMultigraph) = findparam(mg.weights)
