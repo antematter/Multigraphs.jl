@@ -52,7 +52,7 @@ function WeightedMultipleEdge(src::T, dst::T, mul::U, w::Type{W}) where {T<:Inte
 end
 
 WeightedMultipleEdge(src::T, dst::T, ws::U) where {T<:Integer, U<:Any} = WeightedMultipleEdge(src, dst, one(Int), [ws])
-
+WeightedMultipleEdge(src::T, dst::T) where {T<:Integer} = WeightedMultipleEdge(src, dst, one(Int))
 eltype(e::T) where {T<:AbstractWeightedMultipleEdge} = eltype(src(e))
 
 src(e::WeightedMultipleEdge) = e.src
